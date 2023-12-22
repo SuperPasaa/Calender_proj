@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class TourRequestPage extends StatefulWidget {
   TourRequestPage({Key? key});
@@ -16,16 +15,10 @@ class _TourRequestPageState extends State<TourRequestPage> {
   String selectedTourTime = '';
   bool isInPersonSelected = false;
   bool isVirtualSelected = false;
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  DateTime selectedDay = DateTime.now(); // Initialize with the current date
 
   @override
   Widget build(BuildContext context) {
-    void _onDaySelected(DateTime day, DateTime focusedDay) {
-      setState(() {
-        today = day;
-      });
-    }
-
     void _handleTourTimeChange(String value) {
       setState(() {
         selectedTourTime = value;
@@ -36,7 +29,6 @@ class _TourRequestPageState extends State<TourRequestPage> {
       setState(() {
         isInPersonSelected = !isInPersonSelected;
         isVirtualSelected = false;
-        selectedTourTime = isInPersonSelected ? 'In person' : '';
       });
     }
 
@@ -44,23 +36,12 @@ class _TourRequestPageState extends State<TourRequestPage> {
       setState(() {
         isVirtualSelected = !isVirtualSelected;
         isInPersonSelected = false;
-        selectedTourTime = isVirtualSelected ? 'Virtual' : '';
       });
     }
 
-    void _handleSubmit() async {
-      try {
-        await _firebaseMessaging.sendMessage(
-          to: '/topics/all', // or use the device token to send to a specific device
-          data: {
-            'title': 'Tour Request',
-            'body': 'Selected Time: $selectedTourTime',
-          },
-        );
-        print('Notification sent.');
-      } catch (error) {
-        print('Error sending notification: $error');
-      }
+    void _handleSubmit() {
+      // Handle form submission here
+      print('Form submitted!');
     }
 
     return Scaffold(
@@ -117,7 +98,7 @@ class _TourRequestPageState extends State<TourRequestPage> {
                     width: 160,
                     decoration: BoxDecoration(
                       color: isVirtualSelected
-                          ?Colors.blue[600]
+                          ? Colors.blue[600]
                           : Colors.grey,
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -169,12 +150,16 @@ class _TourRequestPageState extends State<TourRequestPage> {
                     titleCentered: true,
                   ),
                   rowHeight: 35,
-                  availableGestures: AvailableGestures.all,
-                  selectedDayPredicate: (day) => isSameDay(day, today),
+                  selectedDayPredicate: (day) =>
+                      isSameDay(day, selectedDay), // Updated predicate
                   focusedDay: today,
-                  firstDay: DateTime.utc(2000, 01, 01),
+                  firstDay: today,
                   lastDay: DateTime.utc(2030, 01, 01),
-                  onDaySelected: _onDaySelected,
+                  onDaySelected: (selected, focused) {
+                    setState(() {
+                      selectedDay = selected;
+                    });
+                  },
                 ),
               ),
             ),
